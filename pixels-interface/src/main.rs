@@ -4,8 +4,8 @@ use std::{fmt::format, time::Duration};
 use bevy_ecs::prelude::*;
 use clap::Parser;
 use egui::emath::Rect;
-use egui_macroquad::egui;
-use egui_macroquad::egui::Pos2;
+use egui_macroquad::egui::{self, FontId, RichText};
+use egui_macroquad::egui::{Color32, Pos2};
 use macroquad::prelude::*;
 
 use pixels_canvas::prelude::*;
@@ -32,7 +32,6 @@ enum ToolState {
     Move,
     Draw,
     ColorPick,
-    None,
 }
 
 #[derive(Resource)]
@@ -173,7 +172,6 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                     .unwrap_or(Color::default())
                     .as_array();
             }
-            ToolState::None => {}
         }
     } else if is_mouse_button_down(MouseButton::Middle)
         ^ (is_mouse_button_down(MouseButton::Left) && ToolState::Move == state.selected_tool)
@@ -197,13 +195,19 @@ pub fn draw_settings(mut state: ResMut<State>) {
         let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 ui.label("");
-                ui.label("Pixels Client Settings");
-                ui.label("");
-                ui.label("color:");
+                ui.label(RichText::new("Pixels Client Settings").font(FontId::proportional(16.0)));
+            });
+            ui.label("");
+            ui.horizontal(|ui| {
+                ui.label("Color:");
                 ui.color_edit_button_rgb(&mut state.color);
-                ui.label("");
-                ui.label(format!("cooldown: {}", state.cooldown.round()));
-                ui.label(format!("Selected Tool: {}", state.selected_tool))
+            });
+            ui.label("");
+            ui.label(format!("Selected Tool: {}", state.selected_tool));
+            ui.add_space(ui.available_height() - 20.0);
+            ui.horizontal(|ui| {
+                ui.label("Cooldown: ");
+                ui.label(RichText::new(state.cooldown.round().to_string()).strong());
             });
         });
         state.focus = ctx.is_pointer_over_area();
