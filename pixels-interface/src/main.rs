@@ -5,6 +5,8 @@ use bevy_ecs::prelude::*;
 use clap::Parser;
 use egui_macroquad::egui;
 use macroquad::prelude::*;
+use egui::emath::Rect;
+use egui_macroquad::egui::Pos2;
 
 use pixels_canvas::prelude::*;
 
@@ -43,6 +45,7 @@ pub struct State {
     position: Vec2,
     move_origin: Vec2,
     draw_state: DrawState,
+    menu_area: Rect,
 }
 
 #[macroquad::main("Pixels Client")]
@@ -118,11 +121,7 @@ pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContain
 }
 
 pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
-    if is_key_pressed(KeyCode::Z) {
-        state.focus = !state.focus
-    }
-
-    if !state.focus {
+    if state.menu_area.contains(Pos2::new(mouse_position().0, mouse_position().1)) || state.focus {
         return;
     }
 
@@ -167,7 +166,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                 state.color = container
                     .canvas
                     .pixel(pos.x as usize, pos.y as usize)
-                    .unwrap_or(&Color::default())
+                    .unwrap_or(Color::default())
                     .as_array();
             }
             DrawState::None => {}
@@ -190,12 +189,8 @@ pub fn update_camera(mut state: ResMut<State>) {
 }
 
 pub fn draw_settings(mut state: ResMut<State>) {
-    if state.focus {
-        return;
-    }
-
     egui_macroquad::ui(|ctx| {
-        egui::SidePanel::left("settings").show(ctx, |ui| {
+        let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 ui.label("");
                 ui.label("Pixels Client Settings");
@@ -204,8 +199,10 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.color_edit_button_rgb(&mut state.color);
                 ui.label("");
                 ui.label(format!("cooldown: {}", state.cooldown.round()));
-            })
+            });
         });
+        state.focus = ctx.is_pointer_over_area();
+        state.menu_area = panel.response.rect;
     });
 
     egui_macroquad::draw();
@@ -216,12 +213,13 @@ impl Default for State {
         State {
             cooldown: 0.0,
             zoom: 3.0,
-            focus: true,
+            focus: false,
             color: [1.0; 3],
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
             move_origin: vec2(0.0, 0.0),
             draw_state: DrawState::Move,
+            menu_area: Rect::NOTHING,
         }
     }
 }
