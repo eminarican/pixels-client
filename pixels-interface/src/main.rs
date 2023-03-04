@@ -1,12 +1,12 @@
 use bevy_time::{Time, Timer, TimerMode};
-use std::time::Duration;
+use std::{fmt::format, time::Duration};
 
 use bevy_ecs::prelude::*;
 use clap::Parser;
-use egui_macroquad::egui;
-use macroquad::prelude::*;
 use egui::emath::Rect;
+use egui_macroquad::egui;
 use egui_macroquad::egui::Pos2;
+use macroquad::prelude::*;
 
 use pixels_canvas::prelude::*;
 
@@ -27,8 +27,8 @@ struct App {
     update_schedule: Schedule,
 }
 
-#[derive(PartialEq, Eq)]
-enum DrawState {
+#[derive(PartialEq, Eq, Debug)]
+enum ToolState {
     Move,
     Draw,
     ColorPick,
@@ -44,7 +44,7 @@ pub struct State {
     camera: Camera2D,
     position: Vec2,
     move_origin: Vec2,
-    draw_state: DrawState,
+    selected_tool: ToolState,
     menu_area: Rect,
 }
 
@@ -121,7 +121,11 @@ pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContain
 }
 
 pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
-    if state.menu_area.contains(Pos2::new(mouse_position().0, mouse_position().1)) || state.focus {
+    if state
+        .menu_area
+        .contains(Pos2::new(mouse_position().0, mouse_position().1))
+        || state.focus
+    {
         return;
     }
 
@@ -130,23 +134,23 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
     state.zoom = (state.zoom + mouse_wheel().1 / 120.0).clamp(1.0, 10.0);
 
     if is_key_down(KeyCode::M) {
-        state.draw_state = DrawState::Move;
+        state.selected_tool = ToolState::Move;
     }
 
     if is_key_down(KeyCode::B) {
-        state.draw_state = DrawState::Draw;
+        state.selected_tool = ToolState::Draw;
     }
 
     if is_key_down(KeyCode::I) {
-        state.draw_state = DrawState::ColorPick;
+        state.selected_tool = ToolState::ColorPick;
     }
 
     if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = pos;
 
-        match state.draw_state {
-            DrawState::Move => {}
-            DrawState::Draw => {
+        match state.selected_tool {
+            ToolState::Move => {}
+            ToolState::Draw => {
                 if let Err(e) = container.canvas.set_pixel(
                     pos.x as usize,
                     pos.y as usize,
@@ -162,17 +166,17 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                     }
                 }
             }
-            DrawState::ColorPick => {
+            ToolState::ColorPick => {
                 state.color = container
                     .canvas
                     .pixel(pos.x as usize, pos.y as usize)
                     .unwrap_or(Color::default())
                     .as_array();
             }
-            DrawState::None => {}
+            ToolState::None => {}
         }
     } else if is_mouse_button_down(MouseButton::Middle)
-        ^ (is_mouse_button_down(MouseButton::Left) && DrawState::Move == state.draw_state)
+        ^ (is_mouse_button_down(MouseButton::Left) && ToolState::Move == state.selected_tool)
     {
         let origin = state.move_origin;
         state.position += origin - pos;
@@ -199,6 +203,7 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.color_edit_button_rgb(&mut state.color);
                 ui.label("");
                 ui.label(format!("cooldown: {}", state.cooldown.round()));
+                ui.label(format!("Selected Tool: {}", state.selected_tool))
             });
         });
         state.focus = ctx.is_pointer_over_area();
@@ -218,9 +223,15 @@ impl Default for State {
             camera: Camera2D::default(),
             position: vec2(0.0, 0.0),
             move_origin: vec2(0.0, 0.0),
-            draw_state: DrawState::Move,
+            selected_tool: ToolState::Move,
             menu_area: Rect::NOTHING,
         }
+    }
+}
+
+impl std::fmt::Display for ToolState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 
