@@ -1,12 +1,12 @@
-use std::fmt::{Display, Formatter};
 use bevy_time::{Time, Timer, TimerMode};
-use std::{fmt::format, time::Duration};
+use std::fmt::{Display, Formatter};
+use std::time::Duration;
 
 use bevy_ecs::prelude::*;
 use clap::Parser;
 use egui::emath::Rect;
+use egui_macroquad::egui::Pos2;
 use egui_macroquad::egui::{self, FontId, RichText};
-use egui_macroquad::egui::{Color32, Pos2};
 use macroquad::prelude::*;
 
 use pixels_canvas::prelude::*;
@@ -234,18 +234,17 @@ impl Default for State {
     }
 }
 
-
-impl Display for ToolSelection {
+impl Display for ToolState {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ToolSelection::Draw => {
-                write!(f, "brush")
+            ToolState::Draw => {
+                write!(f, "Brush")
             }
-            ToolSelection::Move => {
-                write!(f, "move tool")
+            ToolState::Move => {
+                write!(f, "Move Tool")
             }
-            ToolSelection::ColorPick => {
-                write!(f, "color picker")
+            ToolState::ColorPick => {
+                write!(f, "Color Picker")
             }
         }
     }
