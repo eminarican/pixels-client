@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use bevy_time::{Time, Timer, TimerMode};
 use std::{fmt::format, time::Duration};
 
@@ -29,8 +30,8 @@ struct App {
 
 #[derive(PartialEq, Eq, Debug)]
 enum ToolState {
-    Move,
     Draw,
+    Move,
     ColorPick,
 }
 
@@ -233,9 +234,20 @@ impl Default for State {
     }
 }
 
-impl std::fmt::Display for ToolState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+
+impl Display for ToolSelection {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ToolSelection::Draw => {
+                write!(f, "brush")
+            }
+            ToolSelection::Move => {
+                write!(f, "move tool")
+            }
+            ToolSelection::ColorPick => {
+                write!(f, "color picker")
+            }
+        }
     }
 }
 
