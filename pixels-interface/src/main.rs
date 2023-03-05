@@ -215,6 +215,11 @@ pub fn draw_settings(mut state: ResMut<State>) {
                 ui.color_edit_button_rgb(&mut state.color);
             });
             ui.label("");
+            ui.horizontal(|ui| {
+                ui.label("Zoom:");
+                ui.add(egui::Slider::new(&mut state.zoom, 1.0..=10.0));
+            });
+            ui.label("");
             ui.label(format!("Selected Tool: {}", state.selected_tool));
             ui.horizontal(|ui| {
                 if ui.add(egui::Button::new("brush")).clicked() {
