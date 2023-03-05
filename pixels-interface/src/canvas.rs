@@ -51,15 +51,18 @@ pub fn draw(container: Res<CanvasContainer>) {
             let (x_position, y_position) = layer_element.get_position();
             for (y, y_pixels) in layer_element.get_pixels().into_iter().enumerate(){
                 for (x, x_pixel) in y_pixels.into_iter().enumerate(){
-                    draw_rectangle(
-                        (x_position + x as u64) as f32,
-                        (y_position + y as u64) as f32,
-                        1.0,
-                        1.0,
-                        convert_color(
-                            x_pixel,
-                        ),
-                    );
+                    let (x_position, y_position) = (x_position+x as u64, y_position+y as u64);
+                    if x_position < container.canvas.width() && y_position < container.canvas.height(){
+                        draw_rectangle(
+                            x_position as f32,
+                            y_position as f32,
+                            1.0,
+                            1.0,
+                            convert_color(
+                                x_pixel,
+                            ),
+                        );
+                    }
                 }
             }
         }
