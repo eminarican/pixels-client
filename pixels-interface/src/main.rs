@@ -10,7 +10,7 @@ use egui_macroquad::egui::Pos2;
 use egui_macroquad::egui::{self, FontId, RichText};
 use macroquad::prelude::*;
 
-use pixels_canvas::{prelude::*, image::Image};
+use pixels_canvas::{image::Image, prelude::*};
 
 use canvas::{CanvasContainer, CanvasTimer};
 use pixels_util::color::Color;
@@ -115,10 +115,12 @@ impl App {
     }
 }
 
-pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>){
+pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
     let pos = mouse_world_pos(state.camera);
-    if let Some(image) = &state.image{
-        container.canvas.replace_part_with_image(pos.x as u64, pos.y as u64, image);
+    if let Some(image) = &state.image {
+        container
+            .canvas
+            .replace_part_with_image(pos.x as u64, pos.y as u64, image);
     }
 }
 
@@ -155,18 +157,18 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
         state.selected_tool = ToolState::ColorPick;
     }
 
-    if is_mouse_button_pressed(MouseButton::Middle){
+    if is_mouse_button_pressed(MouseButton::Middle) {
         state.move_origin = pos;
         let path = FileDialog::new()
-        .set_location("~/Desktop")
-        .add_filter("PNG Image", &["png"])
-        .add_filter("JPEG Image", &["jpg", "jpeg"])
-        .show_open_single_file();
-        if let Ok(Some(path)) = path{
+            .set_location("~/Desktop")
+            .add_filter("PNG Image", &["png"])
+            .add_filter("JPEG Image", &["jpg", "jpeg"])
+            .show_open_single_file();
+        if let Ok(Some(path)) = path {
             let image = Image::new(path);
-            container.canvas.get_mut_layers()[1].add_layer_element((pos.x as u64, pos.y as u64), image);
+            container.canvas.get_mut_layers()[1]
+                .add_layer_element((pos.x as u64, pos.y as u64), image);
         }
-        
     } else if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = pos;
 
@@ -193,7 +195,8 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                     .canvas
                     .get_main_pixel(pos.x as usize, pos.y as usize)
                     .unwrap_or(&Color::default()))
-                    .try_into().expect("Expected RGB found RGBA")
+                .try_into()
+                .expect("Expected RGB found RGBA")
             }
         }
     } else if is_mouse_button_down(MouseButton::Middle)
@@ -243,7 +246,10 @@ pub fn draw_settings(mut state: ResMut<State>) {
                     state.selected_tool = ToolState::ColorPick;
                 }
                 if ui.add(egui::Button::new("add image")).clicked() {
-                    state.image = state.image.is_none().then(|| Image::new("./assets/happy-ferris.png"));
+                    state.image = state
+                        .image
+                        .is_none()
+                        .then(|| Image::new("./assets/happy-ferris.png"));
                 }
             });
             ui.add_space(ui.available_height() - 20.0);

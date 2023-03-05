@@ -16,7 +16,7 @@ then
             if [[ $line == *.rs ]]
             then
                 # format file
-                rustfmt $(pwd)/${line:3}
+                rustfmt $(pwd)/${line:3} --edition 2018
                 # add changes
                 git add $(pwd)/${line:3}
             fi
