@@ -6,10 +6,7 @@ use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
 use canvas::CanvasContainer;
-use state::{
-    ToolState,
-    State
-};
+use state::{State, ToolState};
 
 mod canvas;
 mod input;
@@ -45,11 +42,8 @@ impl App {
         let canvas = Canvas::new(args.refresh);
         let mut world = World::new();
 
-        request_new_screen_size(
-            (canvas.width() * 2) as f32,
-            (canvas.height() * 2) as f32
-        );
-        state.position = calculate_center(&canvas);
+        request_new_screen_size((canvas.width() * 2) as f32, (canvas.height() * 2) as f32);
+        state.camera_state.position = calculate_center(&canvas);
 
         let mut draw_schedule = Schedule::default();
         draw_schedule.add_stage("draw", SystemStage::single_threaded());
@@ -59,7 +53,7 @@ impl App {
             "update",
             SystemStage::parallel()
                 .with_system(update_time)
-                .with_system(update_camera)
+                .with_system(update_camera),
         );
 
         canvas::register_systems(&mut world, &mut update_schedule, &mut draw_schedule);
@@ -92,12 +86,12 @@ pub fn update_time(mut time: ResMut<Time>) {
 }
 
 pub fn update_camera(mut state: ResMut<State>) {
-    state.camera = Camera2D {
-        target: state.position,
-        zoom: calculate_zoom(state.zoom),
+    state.camera_state.instance = Camera2D {
+        target: state.camera_state.position,
+        zoom: calculate_zoom(state.camera_state.zoom),
         ..Default::default()
     };
-    set_camera(&state.camera);
+    set_camera(&state.camera_state.instance);
 }
 
 pub fn calculate_zoom(factor: f32) -> Vec2 {

@@ -44,17 +44,17 @@ fn run_if_not_focus(state: Res<State>) -> ShouldRun {
 }
 
 pub fn update_zoom(mut state: ResMut<State>) {
-    state.zoom = (state.zoom + mouse_wheel().1 / 120.0).clamp(1.0, 10.0);
+    state.camera_state.zoom = (state.camera_state.zoom + mouse_wheel().1 / 120.0).clamp(1.0, 10.0);
 }
 
 pub fn update_mouse(mut state: ResMut<State>) {
-    let pos = super::mouse_world_pos(state.camera);
+    let pos = super::mouse_world_pos(state.camera_state.instance);
 
     if is_mouse_button_pressed(MouseButton::Left) {
-        state.move_origin = pos;
+        state.camera_state.move_origin = pos;
     } else if is_mouse_button_down(MouseButton::Left) && state.selected_tool == ToolState::Move {
-        let origin = state.move_origin;
-        state.position += origin - pos;
+        let origin = state.camera_state.move_origin;
+        state.camera_state.position += origin - pos;
     }
 }
 
@@ -74,7 +74,7 @@ pub fn update_tool_draw(mut state: ResMut<State>, mut container: ResMut<CanvasCo
     }
 
     if let ToolState::Draw = state.selected_tool {
-        let pos = super::mouse_world_pos(state.camera);
+        let pos = super::mouse_world_pos(state.camera_state.instance);
 
         if let Err(e) = container.canvas.set_main_pixel(
             pos.x as usize,
@@ -95,15 +95,15 @@ pub fn update_tool_draw(mut state: ResMut<State>, mut container: ResMut<CanvasCo
 
 pub fn update_tool_pick(mut state: ResMut<State>, container: ResMut<CanvasContainer>) {
     if is_key_down(KeyCode::I) {
-        state.selected_tool = ToolState::ColorPick;
+        state.selected_tool = ToolState::Pick;
     }
 
     if !is_mouse_button_pressed(MouseButton::Left) {
         return;
     }
 
-    if let ToolState::ColorPick = state.selected_tool {
-        let pos = super::mouse_world_pos(state.camera);
+    if let ToolState::Pick = state.selected_tool {
+        let pos = super::mouse_world_pos(state.camera_state.instance);
 
         state.color = (*container
             .canvas
@@ -119,9 +119,9 @@ pub fn update_tool_place(mut state: ResMut<State>, mut container: ResMut<CanvasC
         return;
     }
 
-    let pos = super::mouse_world_pos(state.camera);
+    let pos = super::mouse_world_pos(state.camera_state.instance);
 
-    state.move_origin = pos;
+    state.camera_state.move_origin = pos;
     let path = FileDialog::new()
         .add_filter("PNG Image", &["png"])
         .add_filter("JPEG Image", &["jpg", "jpeg"])
