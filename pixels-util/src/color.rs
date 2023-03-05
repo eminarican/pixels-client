@@ -1,10 +1,12 @@
 use std::fmt::Display;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Color {
     RGBA([f32; 4]),
     RGB([f32; 3]),
 }
+
+impl Eq for Color {}
 
 impl Default for Color {
     fn default() -> Self {

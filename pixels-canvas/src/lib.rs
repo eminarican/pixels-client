@@ -10,10 +10,10 @@ pub mod image;
 mod layer;
 pub mod prelude {
     pub use super::{
-        Canvas,
         error::CanvasError,
-        image::{Image, ColorMode},
+        image::{ColorMode, Image},
         layer::{Layer, LayerElement},
+        Canvas,
     };
 }
 
@@ -71,6 +71,8 @@ impl Canvas {
         self.layers[0]
             .get_mut_layer_element(0)
             .unwrap()
+            .lock()
+            .unwrap()
             .set_raw_data(raw_data, size);
     }
 
@@ -79,8 +81,14 @@ impl Canvas {
         Ok(())
     }
 
-    pub fn get_main_pixel(&self, x: usize, y: usize) -> Option<&Color> {
-        self.layers[0].get_layer_element(0).unwrap().get_pixel(x, y)
+    pub fn get_main_pixel(&self, x: usize, y: usize) -> Option<Color> {
+        self.layers[0]
+            .get_layer_element(0)
+            .unwrap()
+            .lock()
+            .unwrap()
+            .get_pixel(x, y)
+            .map(|color| color.clone())
     }
 
     pub fn get_cooldown(&self) -> &Cooldown {
@@ -101,6 +109,8 @@ impl Canvas {
         *self.layers[0]
             .get_mut_layer_element(0)
             .unwrap()
+            .lock()
+            .unwrap()
             .get_mut_pixel(x, y)
             .unwrap() = color;
 
@@ -114,8 +124,11 @@ impl Canvas {
         part_image: &Image,
     ) {
         if let Some(layer_element) = self.layers[1].get_mut_layer_element(0) {
-            layer_element.set_data(part_image.clone());
-            layer_element.set_position((part_location_x, part_location_y));
+            layer_element.lock().unwrap().set_data(part_image.clone());
+            layer_element
+                .lock()
+                .unwrap()
+                .set_position((part_location_x, part_location_y));
         } else {
             self.layers[1]
                 .add_layer_element((part_location_x, part_location_y), part_image.clone());
@@ -124,7 +137,11 @@ impl Canvas {
 
     pub fn remove_part_image(&mut self) {
         if let Some(layer_element) = self.layers[1].get_mut_layer_element(0) {
-            layer_element.set_data(Image::from_vec(Vec::new(), (0, 0), ColorMode::RGB));
+            layer_element.lock().unwrap().set_data(Image::from_vec(
+                Vec::new(),
+                (0, 0),
+                ColorMode::RGB,
+            ));
         }
     }
 }

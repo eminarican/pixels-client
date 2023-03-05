@@ -1,11 +1,14 @@
 use egui_macroquad::egui::Rect;
-use std::fmt::{Display, Formatter};
+use std::{
+    fmt::{Display, Formatter},
+    sync::{Arc, Mutex},
+};
 
 use bevy_ecs::prelude::*;
 use egui_extras::RetainedImage;
 use macroquad::prelude::*;
 
-use pixels_canvas::image::Image;
+use pixels_canvas::{image::Image, prelude::LayerElement};
 
 #[derive(Resource)]
 pub struct State {
@@ -33,12 +36,21 @@ pub struct MenuState {
     pub picker_icon: RetainedImage,
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub enum ToolState {
     Draw,
-    Move,
+    Move(Option<Arc<Mutex<LayerElement>>>),
     Pick,
     Place,
+}
+
+impl PartialEq for ToolState {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Move(_), Self::Move(_)) => true,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
 }
 
 impl Default for State {
@@ -49,7 +61,7 @@ impl Default for State {
             cooldown: 0.0,
             image: None,
             menu_area: Rect::NOTHING,
-            selected_tool: ToolState::Move,
+            selected_tool: ToolState::Move(None),
             camera_state: CameraState::default(),
             menu_state: MenuState::default(),
         }
@@ -100,7 +112,7 @@ impl Display for ToolState {
             Self::Draw => {
                 write!(f, "Brush")
             }
-            Self::Move => {
+            Self::Move(_) => {
                 write!(f, "Move Tool")
             }
             Self::Pick => {

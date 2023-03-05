@@ -1,9 +1,11 @@
+use std::sync::{Arc, Mutex};
+
 use pixels_util::color::Color;
 
 use crate::image::{ColorMode, Image};
 
 pub struct Layer {
-    elements: Vec<LayerElement>,
+    elements: Vec<Arc<Mutex<LayerElement>>>,
     //Size may not be necessary
     size: (u64, u64),
 }
@@ -16,7 +18,7 @@ impl From<Image> for Layer {
             image: value,
         };
         Layer {
-            elements: vec![layer_element],
+            elements: vec![Arc::new(Mutex::new(layer_element))],
             size,
         }
     }
@@ -34,23 +36,29 @@ impl Layer {
         self.size
     }
 
-    pub fn get_mut_layer_element(&mut self, idx: usize) -> Option<&mut LayerElement> {
+    pub fn last_mut_layer_element(&mut self) -> Option<&mut Arc<Mutex<LayerElement>>> {
+        self.elements.last_mut()
+    }
+
+    pub fn get_mut_layer_element(&mut self, idx: usize) -> Option<&mut Arc<Mutex<LayerElement>>> {
         self.elements.get_mut(idx)
     }
 
-    pub fn get_layer_element(&self, idx: usize) -> Option<&LayerElement> {
+    pub fn get_layer_element(&self, idx: usize) -> Option<&Arc<Mutex<LayerElement>>> {
         self.elements.get(idx)
     }
 
     pub fn add_layer_element(&mut self, position: (u64, u64), image: Image) {
-        self.elements.push(LayerElement::new(position, image))
+        self.elements
+            .push(Arc::new(Mutex::new(LayerElement::new(position, image))))
     }
 
-    pub fn get_layer_elements(&self) -> &Vec<LayerElement> {
+    pub fn get_layer_elements(&self) -> &Vec<Arc<Mutex<LayerElement>>> {
         &self.elements
     }
 }
 
+#[derive(PartialEq, Eq, Debug)]
 pub struct LayerElement {
     position: (u64, u64),
     image: Image,

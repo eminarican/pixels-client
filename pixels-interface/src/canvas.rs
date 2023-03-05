@@ -77,6 +77,7 @@ pub fn update(
 pub fn draw(container: Res<CanvasContainer>) {
     for layer in container.canvas.get_layers() {
         for layer_element in layer.get_layer_elements() {
+            let layer_element = layer_element.lock().unwrap();
             let (x_pos, y_pos) = layer_element.get_position();
 
             for (y, y_pixels) in layer_element.get_pixels().iter().enumerate() {

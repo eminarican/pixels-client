@@ -16,7 +16,7 @@ impl From<ColorMode> for usize {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Image {
     data: Vec<Vec<Color>>,
     size: (u64, u64),

@@ -6,9 +6,7 @@ use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
 use super::{CanvasContainer, State, ToolState};
-use pixels_canvas::image::Image;
 use pixels_util::color::Color;
-use rfd::FileDialog;
 
 pub fn register_systems(
     _world: &mut World,
@@ -28,7 +26,7 @@ pub fn register_systems(
             .with_run_criteria(run_if_not_focus)
             .with_system(update_tool_pick)
             .with_run_criteria(run_if_not_focus)
-            .with_system(update_tool_place)
+            .with_system(update_draw)
             .with_run_criteria(run_if_not_focus),
     );
 }
@@ -52,7 +50,12 @@ pub fn update_mouse(mut state: ResMut<State>) {
 
     if is_mouse_button_pressed(MouseButton::Left) {
         state.camera_state.move_origin = pos;
-    } else if is_mouse_button_down(MouseButton::Left) && state.selected_tool == ToolState::Move {
+        if let ToolState::Move(Some(_)) = &state.selected_tool {
+            state.selected_tool = ToolState::Move(None);
+        }
+    } else if is_mouse_button_down(MouseButton::Left)
+        && state.selected_tool == ToolState::Move(None)
+    {
         let origin = state.camera_state.move_origin;
         state.camera_state.position += origin - pos;
     }
@@ -60,7 +63,7 @@ pub fn update_mouse(mut state: ResMut<State>) {
 
 pub fn update_tool_move(mut state: ResMut<State>) {
     if is_key_down(KeyCode::M) {
-        state.selected_tool = ToolState::Move;
+        state.selected_tool = ToolState::Move(None);
     }
 }
 
@@ -105,31 +108,23 @@ pub fn update_tool_pick(mut state: ResMut<State>, container: ResMut<CanvasContai
     if let ToolState::Pick = state.selected_tool {
         let pos = super::mouse_world_pos(state.camera_state.instance);
 
-        state.color = (*container
+        state.color = (container
             .canvas
             .get_main_pixel(pos.x as usize, pos.y as usize)
-            .unwrap_or(&Color::default()))
+            .unwrap_or(Color::default()))
         .try_into()
         .expect("Expected RGB found RGBA")
     }
 }
 
-pub fn update_tool_place(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
-    if !is_key_down(KeyCode::P) {
-        return;
-    }
-
+pub fn update_draw(mut state: ResMut<State>) {
     let pos = super::mouse_world_pos(state.camera_state.instance);
-
-    state.camera_state.move_origin = pos;
-    let path = FileDialog::new()
-        .add_filter("PNG Image", &["png"])
-        .add_filter("JPEG Image", &["jpg", "jpeg"])
-        .set_directory("~")
-        .pick_file();
-
-    if let Some(path) = path {
-        let image = Image::new(path);
-        container.canvas.get_mut_layers()[1].add_layer_element((pos.x as u64, pos.y as u64), image);
+    let pos = (pos.x as u64, pos.y as u64);
+    if let ToolState::Move(Some(element)) = &mut state.selected_tool {
+        let mut element = element.lock().unwrap();
+        element.set_position(pos);
+    }
+    if is_mouse_button_released(MouseButton::Left) {
+        state.selected_tool = ToolState::Move(None);
     }
 }
