@@ -46,21 +46,21 @@ pub fn update(
 }
 
 pub fn draw(container: Res<CanvasContainer>) {
-    for layer in container.canvas.get_layers(){
-        for layer_element in layer.get_layer_elements(){
+    for layer in container.canvas.get_layers() {
+        for layer_element in layer.get_layer_elements() {
             let (x_position, y_position) = layer_element.get_position();
-            for (y, y_pixels) in layer_element.get_pixels().into_iter().enumerate(){
-                for (x, x_pixel) in y_pixels.into_iter().enumerate(){
-                    let (x_position, y_position) = (x_position+x as u64, y_position+y as u64);
-                    if x_position < container.canvas.width() && y_position < container.canvas.height(){
+            for (y, y_pixels) in layer_element.get_pixels().iter().enumerate() {
+                for (x, x_pixel) in y_pixels.iter().enumerate() {
+                    let (x_position, y_position) = (x_position + x as u64, y_position + y as u64);
+                    if x_position < container.canvas.width()
+                        && y_position < container.canvas.height()
+                    {
                         draw_rectangle(
                             x_position as f32,
                             y_position as f32,
                             1.0,
                             1.0,
-                            convert_color(
-                                x_pixel,
-                            ),
+                            convert_color(x_pixel),
                         );
                     }
                 }
@@ -70,5 +70,5 @@ pub fn draw(container: Res<CanvasContainer>) {
 }
 
 pub fn convert_color(color: &Color) -> macroquad::color::Color {
-    macroquad::color::Color::new(color.r, color.g, color.b, 255.0)
+    macroquad::color::Color::from(color.to_rgba_array())
 }

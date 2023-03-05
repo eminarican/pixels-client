@@ -1,4 +1,5 @@
 use bevy_time::{Time, Timer, TimerMode};
+use native_dialog::FileDialog;
 use std::fmt::{Display, Formatter};
 use std::time::Duration;
 
@@ -118,8 +119,6 @@ pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>){
     let pos = mouse_world_pos(state.camera);
     if let Some(image) = &state.image{
         container.canvas.replace_part_with_image(pos.x as u64, pos.y as u64, image);
-    }else{
-        container.canvas.remove_part_image();
     }
 }
 
@@ -158,6 +157,16 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
 
     if is_mouse_button_pressed(MouseButton::Middle){
         state.move_origin = pos;
+        let path = FileDialog::new()
+        .set_location("~/Desktop")
+        .add_filter("PNG Image", &["png"])
+        .add_filter("JPEG Image", &["jpg", "jpeg"])
+        .show_open_single_file();
+        if let Ok(Some(path)) = path{
+            let image = Image::new(path);
+            container.canvas.get_mut_layers()[1].add_layer_element((pos.x as u64, pos.y as u64), image);
+        }
+        
     } else if is_mouse_button_pressed(MouseButton::Left) {
         state.move_origin = pos;
 
@@ -180,11 +189,11 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
                 }
             }
             ToolState::ColorPick => {
-                state.color = container
+                state.color = (*container
                     .canvas
                     .get_main_pixel(pos.x as usize, pos.y as usize)
-                    .unwrap_or(&Color::default())
-                    .as_array();
+                    .unwrap_or(&Color::default()))
+                    .try_into().expect("Expected RGB found RGBA")
             }
         }
     } else if is_mouse_button_down(MouseButton::Middle)
