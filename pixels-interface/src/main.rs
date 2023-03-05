@@ -117,7 +117,9 @@ impl App {
 pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>){
     let pos = mouse_world_pos(state.camera);
     if let Some(image) = &state.image{
-        container.canvas.replace_part_with_image(pos.x as usize, pos.y as usize, image);
+        container.canvas.replace_part_with_image(pos.x as u64, pos.y as u64, image);
+    }else{
+        container.canvas.remove_part_image();
     }
 }
 
@@ -162,7 +164,7 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
         match state.selected_tool {
             ToolState::Move => {}
             ToolState::Draw => {
-                if let Err(e) = container.canvas.set_pixel(
+                if let Err(e) = container.canvas.set_main_pixel(
                     pos.x as usize,
                     pos.y as usize,
                     Color::from(state.color),
@@ -180,8 +182,8 @@ pub fn update_input(mut state: ResMut<State>, mut container: ResMut<CanvasContai
             ToolState::ColorPick => {
                 state.color = container
                     .canvas
-                    .pixel(pos.x as usize, pos.y as usize)
-                    .unwrap_or(Color::default())
+                    .get_main_pixel(pos.x as usize, pos.y as usize)
+                    .unwrap_or(&Color::default())
                     .as_array();
             }
         }

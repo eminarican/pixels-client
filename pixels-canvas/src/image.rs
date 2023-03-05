@@ -2,6 +2,7 @@ use std::path::Path;
 
 use pixels_util::color::Color;
 
+#[derive(Clone)]
 pub struct Image {
     data: Vec<Vec<Color>>,
     size: (u64, u64)
@@ -47,10 +48,18 @@ impl Image {
         self.data.get(y).and_then(|x_axis| x_axis.get(x))
     }
 
+    pub fn get_mut_pixel_color(&mut self, x: usize, y: usize) -> Option<&mut Color> {
+        self.data.get_mut(y).and_then(|x_axis| x_axis.get_mut(x))
+    }
+
     pub fn set_pixel_color(&mut self, x: usize, y: usize, color: Color) {
         if let Some(pixel) = self.data.get_mut(y).and_then(|x_axis| x_axis.get_mut(x)){
             *pixel = color;
         }
+    }
+
+    pub fn get_pixels(&self) -> &Vec<Vec<Color>>{
+        &self.data
     }
 
     pub fn replace_part_with_image(&mut self, part_x: usize, part_y: usize, image: &Image) {
