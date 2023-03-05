@@ -120,11 +120,13 @@ pub fn update_tool_pick(mut state: ResMut<State>, container: ResMut<CanvasContai
 pub fn update_draw(mut state: ResMut<State>) {
     let pos = super::mouse_world_pos(state.camera_state.instance);
     let pos = (pos.x as u64, pos.y as u64);
-    if let ToolState::Move(Some(element)) = &mut state.selected_tool {
-        let mut element = element.lock().unwrap();
-        element.set_position(pos);
-    }
-    if is_mouse_button_released(MouseButton::Left) {
-        state.selected_tool = ToolState::Move(None);
+
+    if let ToolState::Move(tool_state) = &mut state.selected_tool {
+        if let Some(element) = tool_state {
+            let mut element = element.lock().unwrap();
+            element.set_position(pos);
+        } else if is_mouse_button_released(MouseButton::Left) {
+            state.selected_tool = ToolState::Move(None);
+        }
     }
 }
