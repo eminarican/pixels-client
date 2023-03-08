@@ -7,17 +7,15 @@ use std::{
 use bevy_ecs::prelude::*;
 use egui_extras::RetainedImage;
 use macroquad::prelude::*;
-
-use pixels_canvas::{image::Image, prelude::LayerElement};
+use pixels_canvas::prelude::*;
 
 #[derive(Resource)]
 pub struct State {
     pub focus: bool,
     pub color: [f32; 3],
     pub cooldown: f32,
-    pub menu_area: Rect,
-    pub image: Option<Image>,
-    pub selected_tool: ToolState,
+    pub image: Option<Element>,
+    pub selected_tool: ToolType,
     pub camera_state: CameraState,
     pub menu_state: MenuState,
 }
@@ -30,38 +28,29 @@ pub struct CameraState {
 }
 
 pub struct MenuState {
+    pub area: Rect,
     pub move_icon: RetainedImage,
     pub brush_icon: RetainedImage,
     pub image_icon: RetainedImage,
     pub picker_icon: RetainedImage,
 }
 
-#[derive(Debug)]
-pub enum ToolState {
-    Draw,
-    Move(Option<Arc<Mutex<LayerElement>>>),
-    Pick,
-    Place,
+#[derive(PartialEq, Eq, Debug)]
+pub enum ToolType {
+    Mover,
+    Brush,
+    Picker,
+    Placer,
 }
 
-impl PartialEq for ToolState {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Move(_), Self::Move(_)) => true,
-            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
-        }
-    }
-}
-
-impl Default for State {
-    fn default() -> Self {
+impl State {
+    pub fn new(image: Option<Element>) -> Self {
         State {
+            image,
             focus: false,
             color: [1.0; 3],
             cooldown: 0.0,
-            image: None,
-            menu_area: Rect::NOTHING,
-            selected_tool: ToolState::Move(None),
+            selected_tool: ToolType::Mover,
             camera_state: CameraState::default(),
             menu_state: MenuState::default(),
         }
@@ -82,6 +71,7 @@ impl Default for CameraState {
 impl Default for MenuState {
     fn default() -> Self {
         MenuState {
+            area: Rect::NOTHING,
             move_icon: RetainedImage::from_image_bytes(
                 "move_icon",
                 include_bytes!("../../assets/tool-move.png"),

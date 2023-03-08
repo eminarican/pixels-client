@@ -1,115 +1,142 @@
-use egui_macroquad::egui::{self, RichText};
+use egui_macroquad::egui::{
+    self, show_tooltip_at_pointer, Context, Id, Response, TextureId, Ui, Vec2, Widget,
+};
 
 use bevy_ecs::prelude::*;
-use pixels_canvas::prelude::*;
-use rfd::FileDialog;
 
-use super::{State, ToolState};
+use super::{State, ToolType};
 
-use crate::{add_tool_button, canvas::CanvasContainer};
+use crate::{panel, tool_button, tool_button_if};
 
-pub fn register_systems(
-    _world: &mut World,
-    _update_schedule: &mut Schedule,
-    draw_schedule: &mut Schedule,
-) {
-    draw_schedule.add_stage(
-        "draw_settings",
-        SystemStage::single_threaded().with_system(draw.after("canvas_draw")),
-    );
+struct ToolButton {
+    selected: bool,
+    icon: TextureId,
+    size: Vec2,
 }
 
-pub fn draw(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
-    egui_macroquad::ui(|ctx| {
-        let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.set_width(0.0);
-                ui.add_space(20.0);
-                ui.color_edit_button_rgb(&mut state.color);
-                ui.add_space(5.0);
-                add_tool_button!(
-                    ctx,
-                    ui,
-                    state,
-                    state.menu_state.move_icon,
-                    ToolState::Move(None),
-                    {
-                        state.selected_tool = ToolState::Move(None);
-                    }
-                );
-                ui.add_space(5.0);
-                add_tool_button!(
-                    ctx,
-                    ui,
-                    state,
-                    state.menu_state.brush_icon,
-                    ToolState::Draw,
-                    {
-                        state.selected_tool = ToolState::Draw;
-                    }
-                );
-                ui.add_space(5.0);
-                add_tool_button!(
-                    ctx,
-                    ui,
-                    state,
-                    state.menu_state.picker_icon,
-                    ToolState::Pick,
-                    {
-                        state.selected_tool = ToolState::Pick;
-                    }
-                );
-                ui.add_space(5.0);
-                add_tool_button!(
-                    ctx,
-                    ui,
-                    state,
-                    state.menu_state.image_icon,
-                    ToolState::Place,
-                    {
-                        state.selected_tool = ToolState::Place;
-                        let path = FileDialog::new()
-                            .add_filter("PNG Image", &["png"])
-                            .add_filter("JPEG Image", &["jpg", "jpeg"])
-                            .set_directory("~")
-                            .pick_file();
+pub fn draw(world: &mut World) {
+    panel!(world, |ctx: &Context, ui: &mut Ui, state: &mut State| {
+        ui.add_space(20.0);
+        ui.color_edit_button_rgb(&mut state.color);
 
-                        if let Some(path) = path {
-                            let image = Image::new(path);
-                            container.canvas.get_mut_layers()[1].add_layer_element((0, 0), image);
-                            state.selected_tool = ToolState::Move(
-                                container.canvas.get_mut_layers()[1]
-                                    .last_mut_layer_element()
-                                    .map(|c| c.clone()),
-                            )
-                        }
-                    }
-                );
-                ui.add_space(5.0);
-                ui.label(RichText::new(state.cooldown.round().to_string()).strong());
-            });
-        });
-        state.focus = ctx.is_pointer_over_area();
-        state.menu_area = panel.response.rect;
+        tool_button!(
+            ctx,
+            ui,
+            state,
+            ToolType::Mover,
+            state.menu_state.move_icon,
+            {
+                state.selected_tool = ToolType::Mover;
+            }
+        );
+
+        tool_button!(
+            ctx,
+            ui,
+            state,
+            ToolType::Brush,
+            state.menu_state.brush_icon,
+            {
+                state.selected_tool = ToolType::Brush;
+            }
+        );
+
+        tool_button!(
+            ctx,
+            ui,
+            state,
+            ToolType::Picker,
+            state.menu_state.picker_icon,
+            {
+                state.selected_tool = ToolType::Picker;
+            }
+        );
+
+        tool_button_if!(
+            ctx,
+            ui,
+            state,
+            ToolType::Placer,
+            state.menu_state.image_icon,
+            {
+                state.selected_tool = ToolType::Placer;
+            },
+            state.image.is_some()
+        );
     });
-
-    egui_macroquad::draw();
 }
 
-#[macro_export]
-macro_rules! add_tool_button {
-    ($ctx:expr, $ui:expr, $state:expr, $icon:expr, $tool:expr, $body:block) => {{
-        let button = $ui.add(egui::ImageButton::new(
-            $icon.texture_id($ctx),
-            $icon.size_vec2() / 5.0,
-        ));
+impl ToolButton {
+    fn new(selected: bool, icon: TextureId, size: Vec2) -> Self {
+        Self {
+            selected,
+            icon,
+            size,
+        }
+    }
+}
 
-        if $state.selected_tool == $tool {
+impl Widget for ToolButton {
+    fn ui(self, ui: &mut Ui) -> Response {
+        ui.add_space(5.0);
+        let button = ui.add(egui::ImageButton::new(self.icon, self.size / 5.0));
+
+        if self.selected {
             button.clone().highlight();
         }
 
+        button
+    }
+}
+
+#[macro_export]
+macro_rules! panel {
+    ($world:expr, $body:expr $(,)?) => {
+        let mut res = $world.get_resource_mut::<State>().unwrap();
+        let mut state = res.as_mut();
+
+        egui_macroquad::ui(|ctx| {
+            if state.cooldown != 0.0 {
+                show_tooltip_at_pointer(ctx, Id::new("cooldown"), |ui| {
+                    ui.label(format!("please wait {} secs", state.cooldown.round()));
+                });
+            }
+
+            let panel = egui::SidePanel::left("settings").show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.set_width(0.0);
+                    $body(ctx, ui, &mut state)
+                });
+            });
+
+            state.focus = ctx.is_pointer_over_area();
+            state.menu_state.area = panel.response.rect;
+        });
+
+        egui_macroquad::draw();
+    };
+}
+
+#[macro_export]
+macro_rules! tool_button {
+    ($ctx:expr, $ui:expr, $state:expr, $tool:expr, $icon:expr, $body:block) => {{
+        let button = $ui.add(ToolButton::new(
+            $state.selected_tool == $tool,
+            $icon.texture_id($ctx),
+            $icon.size_vec2(),
+        ));
+
         if button.clicked() {
             $body
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! tool_button_if {
+    ($ctx:expr, $ui:expr, $state:expr, $tool:expr, $icon:expr, $body:block, $condition:expr) => {{
+        if $condition {
+            tool_button!($ctx, $ui, $state, $tool, $icon, $body);
         }
     }};
 }

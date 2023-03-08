@@ -6,6 +6,7 @@ use bevy_ecs::prelude::*;
 use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
+use crate::state::ToolType;
 use pixels_util::color::Color;
 
 use super::State;
@@ -33,32 +34,28 @@ impl CanvasTimer {
 }
 
 pub fn register_systems(
+    canvas: Canvas,
     world: &mut World,
-    _update_schedule: &mut Schedule,
+    update_schedule: &mut Schedule,
     draw_schedule: &mut Schedule,
 ) {
-    draw_schedule.add_stage(
-        "draw_canvas",
-        SystemStage::single_threaded()
-            .with_system(draw.label("canvas_draw"))
-            .with_system(draw_image),
-    );
+    draw_schedule.add_systems((draw, draw_image));
 
-    draw_schedule.add_stage(
-        "update_canvas",
-        SystemStage::single_threaded()
-            .with_system(update_cooldown)
-            .with_system(update),
-    );
+    update_schedule.add_systems((update_cooldown, update.run_if(not(is_cooldown))));
 
+    world.insert_resource(CanvasContainer::new(canvas));
     world.insert_resource(CanvasTimer::new(Timer::new(
         Duration::from_secs(5),
         TimerMode::Repeating,
     )));
 }
 
+fn is_cooldown(state: Res<State>) -> bool {
+    state.cooldown != 0.0
+}
+
 pub fn update_cooldown(mut state: ResMut<State>, container: ResMut<CanvasContainer>) {
-    state.cooldown = container.canvas.get_cooldown().remaining();
+    state.cooldown = container.canvas.get_cooldown();
 }
 
 pub fn update(
@@ -69,56 +66,54 @@ pub fn update(
     if timer.instance.tick(time.delta()).finished() {
         container
             .canvas
-            .update_main_pixels()
+            .update_main_layer()
             .expect("couldn't update canvas pixels");
     }
 }
 
 pub fn draw(state: Res<State>, container: Res<CanvasContainer>) {
-    for layer in container.canvas.get_layers() {
-        for layer_element in layer.get_layer_elements() {
-            let layer_element = layer_element.lock().unwrap();
-            let (x_pos, y_pos) = layer_element.get_position();
-
-            for (y, y_pixels) in layer_element.get_pixels().iter().enumerate() {
-                for (x, x_pixel) in y_pixels.iter().enumerate() {
-                    let (x_pos, y_pos) = (x_pos + x as u64, y_pos + y as u64);
-
-                    if x_pos >= container.canvas.width() || y_pos >= container.canvas.height() {
-                        continue;
-                    }
-
-                    draw_rectangle(
-                        x_pos as f32,
-                        y_pos as f32,
-                        1.0,
-                        1.0,
-                        convert_color(if state.cooldown == 0.0 {
-                            x_pixel.clone()
-                        } else {
-                            dim_color(x_pixel)
-                        }),
-                    );
-                }
-            }
-        }
+    for ((x, y), color) in container.canvas.get_layers_merged().iter() {
+        draw_rectangle(
+            x as f32,
+            y as f32,
+            1.0,
+            1.0,
+            convert_color(if state.cooldown == 0.0 {
+                color
+            } else {
+                dim_color(color)
+            }),
+        );
     }
 }
 
-pub fn draw_image(state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
+pub fn draw_image(mut state: ResMut<State>, mut container: ResMut<CanvasContainer>) {
     let pos = super::mouse_world_pos(state.camera_state.instance);
-    if let Some(image) = &state.image {
+
+    container.canvas.get_image_layer_mut().clean();
+
+    if state.selected_tool != ToolType::Placer {
+        return;
+    }
+
+    if state.image.is_some() {
+        state
+            .image
+            .as_mut()
+            .unwrap()
+            .set_position(pos.x as u32, pos.y as u32);
         container
             .canvas
-            .replace_part_with_image(pos.x as u64, pos.y as u64, image);
+            .get_image_layer_mut()
+            .draw(state.image.clone().unwrap());
     }
 }
 
-pub fn dim_color(color: &Color) -> Color {
-    let [r, g, b, _] = color.to_rgba_array();
-    Color::new_rgb(r * 0.5, g * 0.5, b * 0.5)
+pub fn dim_color(color: Color) -> Color {
+    Color::new(color.r * 0.5, color.g * 0.5, color.b * 0.5, color.a)
 }
 
 pub fn convert_color(color: Color) -> macroquad::color::Color {
-    macroquad::color::Color::from(color.to_rgba_array())
+    let array: [f32; 4] = color.into();
+    macroquad::color::Color::from(array)
 }
