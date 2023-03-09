@@ -1,11 +1,7 @@
+use egui_extras::RetainedImage;
 use egui_macroquad::egui::Rect;
-use std::{
-    fmt::{Display, Formatter},
-    sync::{Arc, Mutex},
-};
 
 use bevy_ecs::prelude::*;
-use egui_extras::RetainedImage;
 use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
@@ -92,25 +88,6 @@ impl Default for MenuState {
                 include_bytes!("../../assets/tool-picker.png"),
             )
             .unwrap(),
-        }
-    }
-}
-
-impl Display for ToolState {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Draw => {
-                write!(f, "Brush")
-            }
-            Self::Move(_) => {
-                write!(f, "Move Tool")
-            }
-            Self::Pick => {
-                write!(f, "Color Picker")
-            }
-            Self::Place => {
-                write!(f, "Image Placer")
-            }
         }
     }
 }

@@ -1,6 +1,6 @@
 use image::ColorType;
 
-use crate::{denormalize_color, from, into, normalize_color};
+use crate::{denormalize_color, from, normalize_color};
 
 #[derive(Copy, Clone)]
 pub enum ColorMode {
