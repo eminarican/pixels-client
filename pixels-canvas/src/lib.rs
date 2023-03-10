@@ -4,21 +4,12 @@ use pixels_util::prelude::*;
 use prelude::*;
 
 mod client;
-mod layer;
-mod error;
 mod elem;
+mod error;
+mod layer;
 
 pub mod prelude {
-    pub use crate::{
-        Canvas,
-        layer::{
-            Layer,
-
-        },
-        elem::Element,
-        client::Client,
-        error::CanvasError,
-    };
+    pub use crate::{client::Client, elem::Element, error::CanvasError, layer::Layer, Canvas};
 }
 
 pub struct Canvas {
@@ -81,29 +72,23 @@ impl Canvas {
     layer_accessors!(image, 1);
 
     pub fn get_layers_merged(&self) -> Layer {
-        self.layers.iter().fold(
-            Layer::new(self.size, 1.0),
-            |l, o| l.overlay(o),
-        )
+        self.layers
+            .iter()
+            .fold(Layer::new(self.size, 1.0), |l, o| l.overlay(o))
     }
 
     pub fn update_main_layer(&mut self) -> Result<(), CanvasError> {
         let pixels = self.client.canvas_pixels()?;
         let size = self.size;
 
-        self.get_main_layer_mut().set_pixels(
-            Pixels::from_buffer(
-                size,
-                pixels,
-                ColorMode::RGB,
-            )
-        );
+        self.get_main_layer_mut()
+            .set_pixels(Pixels::from_buffer(size, pixels, ColorMode::RGB));
         Ok(())
     }
 
     pub fn set_pixel(&mut self, x: u32, y: u32, color: Color) -> Result<(), CanvasError> {
         if !self.cooldown.is_ended() {
-            return Err(CanvasError::Cooldown(self.get_cooldown()))
+            return Err(CanvasError::Cooldown(self.get_cooldown()));
         }
 
         self.get_main_layer_mut().set_pixel(x, y, color);

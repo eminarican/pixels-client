@@ -1,15 +1,11 @@
 use image::ColorType;
 
-use crate::{
-    from, into,
-    normalize_color,
-    denormalize_color
-};
+use crate::{denormalize_color, from, normalize_color};
 
 #[derive(Copy, Clone)]
 pub enum ColorMode {
     RGBA,
-    RGB
+    RGB,
 }
 
 #[derive(Copy, Clone, Default)]
@@ -22,12 +18,7 @@ pub struct Color {
 
 impl Color {
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> Color {
-        Color {
-            r,
-            g,
-            b,
-            a,
-        }
+        Color { r, g, b, a }
     }
 
     pub fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> Color {
@@ -45,17 +36,8 @@ impl Color {
 
     pub fn from_slice(buffer: &[u8], mode: ColorMode) -> Color {
         match mode {
-            ColorMode::RGBA => Color::from_rgba(
-                buffer[0],
-                buffer[1],
-                buffer[2],
-                buffer[3],
-            ),
-            ColorMode::RGB => Color::from_rgb(
-                buffer[0],
-                buffer[1],
-                buffer[2],
-            ),
+            ColorMode::RGBA => Color::from_rgba(buffer[0], buffer[1], buffer[2], buffer[3]),
+            ColorMode::RGB => Color::from_rgb(buffer[0], buffer[1], buffer[2]),
         }
     }
 
@@ -83,10 +65,7 @@ impl Color {
                 "{:02x}{:02x}{:02x}{:02x}",
                 color.0, color.1, color.2, color.3
             ),
-            ColorMode::RGB => format!(
-                "{:02x}{:02x}{:02x}",
-                color.0, color.1, color.2
-            ),
+            ColorMode::RGB => format!("{:02x}{:02x}{:02x}", color.0, color.1, color.2),
         }
     }
 
@@ -139,15 +118,9 @@ from!(Color, [f32; 4], |value: Color| {
 impl ColorMode {
     pub fn from(format: ColorType) -> Option<Self> {
         match format {
-            ColorType::Rgb8 | ColorType::Rgb16 | ColorType::Rgb32F => {
-                Some(ColorMode::RGB)
-            },
-            ColorType::Rgba8 | ColorType::Rgba16 | ColorType::Rgba32F => {
-                Some(ColorMode::RGBA)
-            }
-            _ => {
-                None
-            }
+            ColorType::Rgb8 | ColorType::Rgb16 | ColorType::Rgb32F => Some(ColorMode::RGB),
+            ColorType::Rgba8 | ColorType::Rgba16 | ColorType::Rgba32F => Some(ColorMode::RGBA),
+            _ => None,
         }
     }
 

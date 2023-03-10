@@ -4,7 +4,7 @@ use crate::prelude::Element;
 
 pub struct Layer {
     pixels: Pixels,
-    opacity: f32
+    opacity: f32,
 }
 
 impl Layer {
@@ -16,19 +16,11 @@ impl Layer {
     }
 
     pub fn from_vec(size: (u32, u32), buffer: Vec<u8>, opacity: f32) -> Self {
-        Self::from_pixels(
-            Pixels::from_buffer(
-                size, buffer, ColorMode::RGB
-            ),
-            opacity
-        )
+        Self::from_pixels(Pixels::from_buffer(size, buffer, ColorMode::RGB), opacity)
     }
 
     pub fn from_pixels(pixels: Pixels, opacity: f32) -> Self {
-        Self {
-            pixels,
-            opacity,
-        }
+        Self { pixels, opacity }
     }
 
     pub fn get_opacity(&self) -> u8 {
@@ -56,10 +48,8 @@ impl Layer {
 
     pub fn overlay(&self, other: &Layer) -> Layer {
         Self::from_pixels(
-            self.pixels.overlay(
-                &other.pixels, other.opacity
-            ),
-            self.opacity
+            self.pixels.overlay(&other.pixels, other.opacity),
+            self.opacity,
         )
     }
 

@@ -1,5 +1,5 @@
-use std::path::Path;
 use pixels_util::pixels::PixelsIterator;
+use std::path::Path;
 
 use pixels_util::prelude::*;
 

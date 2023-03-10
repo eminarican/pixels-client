@@ -1,17 +1,12 @@
-use egui_macroquad::egui::{self, Response, TextureId, Widget, Vec2, Ui, Context, show_tooltip_at_pointer, Id};
+use egui_macroquad::egui::{
+    self, show_tooltip_at_pointer, Context, Id, Response, TextureId, Ui, Vec2, Widget,
+};
 
 use bevy_ecs::prelude::*;
 
-use super::{
-    State,
-    ToolType
-};
+use super::{State, ToolType};
 
-use crate::{
-    panel,
-    tool_button,
-    tool_button_if
-};
+use crate::{panel, tool_button, tool_button_if};
 
 struct ToolButton {
     selected: bool,
@@ -24,21 +19,50 @@ pub fn draw(world: &mut World) {
         ui.add_space(20.0);
         ui.color_edit_button_rgb(&mut state.color);
 
-        tool_button!(ctx, ui, state, ToolType::Mover, state.menu_state.move_icon, {
-            state.selected_tool = ToolType::Mover;
-        });
+        tool_button!(
+            ctx,
+            ui,
+            state,
+            ToolType::Mover,
+            state.menu_state.move_icon,
+            {
+                state.selected_tool = ToolType::Mover;
+            }
+        );
 
-        tool_button!(ctx, ui, state, ToolType::Brush, state.menu_state.brush_icon, {
-            state.selected_tool = ToolType::Brush;
-        });
+        tool_button!(
+            ctx,
+            ui,
+            state,
+            ToolType::Brush,
+            state.menu_state.brush_icon,
+            {
+                state.selected_tool = ToolType::Brush;
+            }
+        );
 
-        tool_button!(ctx, ui, state, ToolType::Picker, state.menu_state.picker_icon, {
-            state.selected_tool = ToolType::Picker;
-        });
+        tool_button!(
+            ctx,
+            ui,
+            state,
+            ToolType::Picker,
+            state.menu_state.picker_icon,
+            {
+                state.selected_tool = ToolType::Picker;
+            }
+        );
 
-        tool_button_if!(ctx, ui, state, ToolType::Placer, state.menu_state.image_icon, {
-            state.selected_tool = ToolType::Placer;
-        }, state.image.is_some());
+        tool_button_if!(
+            ctx,
+            ui,
+            state,
+            ToolType::Placer,
+            state.menu_state.image_icon,
+            {
+                state.selected_tool = ToolType::Placer;
+            },
+            state.image.is_some()
+        );
     });
 }
 
@@ -55,10 +79,7 @@ impl ToolButton {
 impl Widget for ToolButton {
     fn ui(self, ui: &mut Ui) -> Response {
         ui.add_space(5.0);
-        let button = ui.add(egui::ImageButton::new(
-            self.icon,
-            self.size / 5.0,
-        ));
+        let button = ui.add(egui::ImageButton::new(self.icon, self.size / 5.0));
 
         if self.selected {
             button.clone().highlight();
@@ -100,7 +121,9 @@ macro_rules! panel {
 macro_rules! tool_button {
     ($ctx:expr, $ui:expr, $state:expr, $tool:expr, $icon:expr, $body:block) => {{
         let button = $ui.add(ToolButton::new(
-            $state.selected_tool == $tool, $icon.texture_id($ctx), $icon.size_vec2()
+            $state.selected_tool == $tool,
+            $icon.texture_id($ctx),
+            $icon.size_vec2(),
         ));
 
         if button.clicked() {

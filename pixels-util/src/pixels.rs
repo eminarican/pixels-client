@@ -1,6 +1,6 @@
-use std::path::Path;
 use image::io::Reader;
 use image::GenericImageView;
+use std::path::Path;
 
 use super::prelude::*;
 
@@ -14,12 +14,7 @@ impl Pixels {
     pub fn new(size: (u32, u32)) -> Self {
         Self {
             size,
-            data: vec![
-                vec![
-                    Color::default();
-                    size.0 as usize
-                ]; size.1 as usize
-            ],
+            data: vec![vec![Color::default(); size.0 as usize]; size.1 as usize],
         }
     }
 
@@ -27,20 +22,19 @@ impl Pixels {
         let mut instance = Self::new(size);
 
         for (i, pixel) in instance.data.iter_mut().flatten().enumerate() {
-            *pixel = Color::from_slice(&buffer[i*mode.size()..], mode);
+            *pixel = Color::from_slice(&buffer[i * mode.size()..], mode);
         }
 
         instance
     }
 
     pub fn from_path<P: AsRef<Path>>(path: P) -> Self {
-        let image = Reader::open(path)
-            .unwrap().decode().unwrap();
+        let image = Reader::open(path).unwrap().decode().unwrap();
 
         Self::from_buffer(
             image.dimensions(),
             image.clone().into_bytes(),
-            ColorMode::from(image.color()).expect("unsupported format")
+            ColorMode::from(image.color()).expect("unsupported format"),
         )
     }
 
@@ -57,17 +51,15 @@ impl Pixels {
     }
 
     pub fn get(&self, x: u32, y: u32) -> Option<Color> {
-        Some(*self.data
-            .get(y as usize)?
-            .get(x as usize)?)
+        Some(*self.data.get(y as usize)?.get(x as usize)?)
     }
 
     pub fn set(&mut self, x: u32, y: u32, color: Color) {
-        if let Some(item) = self.data
+        if let Some(item) = self
+            .data
             .get_mut(y as usize)
-            .and_then(|list| {
-                list.get_mut(x as usize)
-            }) {
+            .and_then(|list| list.get_mut(x as usize))
+        {
             *item = color;
         }
     }
@@ -96,11 +88,7 @@ pub struct PixelsIterator {
 
 impl PixelsIterator {
     fn new(pixels: Pixels) -> Self {
-        Self {
-            pixels,
-            x: 0,
-            y: 0,
-        }
+        Self { pixels, x: 0, y: 0 }
     }
 }
 

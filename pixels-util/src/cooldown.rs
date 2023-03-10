@@ -1,17 +1,13 @@
-use chrono::{
-    DateTime,
-    Duration,
-    Utc,
-};
+use chrono::{DateTime, Duration, Utc};
 
-pub struct Cooldown{
-    time: DateTime<Utc>
+pub struct Cooldown {
+    time: DateTime<Utc>,
 }
 
 impl Cooldown {
     pub fn new() -> Self {
         Self {
-            time: DateTime::default()
+            time: DateTime::default(),
         }
     }
 

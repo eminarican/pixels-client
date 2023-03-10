@@ -6,8 +6,8 @@ use bevy_ecs::prelude::*;
 use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
-use pixels_util::color::Color;
 use crate::state::ToolType;
+use pixels_util::color::Color;
 
 use super::State;
 
@@ -39,15 +39,9 @@ pub fn register_systems(
     update_schedule: &mut Schedule,
     draw_schedule: &mut Schedule,
 ) {
-    draw_schedule.add_systems((
-        draw,
-        draw_image
-    ));
+    draw_schedule.add_systems((draw, draw_image));
 
-    update_schedule.add_systems((
-        update_cooldown,
-        update.run_if(not(is_cooldown)),
-    ));
+    update_schedule.add_systems((update_cooldown, update.run_if(not(is_cooldown))));
 
     world.insert_resource(CanvasContainer::new(canvas));
     world.insert_resource(CanvasTimer::new(Timer::new(
@@ -80,12 +74,15 @@ pub fn update(
 pub fn draw(state: Res<State>, container: Res<CanvasContainer>) {
     for ((x, y), color) in container.canvas.get_layers_merged().iter() {
         draw_rectangle(
-            x as f32, y as f32, 1.0, 1.0,
+            x as f32,
+            y as f32,
+            1.0,
+            1.0,
             convert_color(if state.cooldown == 0.0 {
                 color
             } else {
                 dim_color(color)
-            })
+            }),
         );
     }
 }
@@ -100,8 +97,15 @@ pub fn draw_image(mut state: ResMut<State>, mut container: ResMut<CanvasContaine
     }
 
     if state.image.is_some() {
-        state.image.as_mut().unwrap().set_position(pos.x as u32, pos.y as u32);
-        container.canvas.get_image_layer_mut().draw(state.image.clone().unwrap());
+        state
+            .image
+            .as_mut()
+            .unwrap()
+            .set_position(pos.x as u32, pos.y as u32);
+        container
+            .canvas
+            .get_image_layer_mut()
+            .draw(state.image.clone().unwrap());
     }
 }
 

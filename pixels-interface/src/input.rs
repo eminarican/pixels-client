@@ -4,11 +4,7 @@ use bevy_ecs::prelude::*;
 use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
-use super::{
-    CanvasContainer,
-    ToolType,
-    State,
-};
+use super::{CanvasContainer, State, ToolType};
 use pixels_util::color::Color;
 
 pub fn register_systems(update_schedule: &mut Schedule) {
@@ -60,11 +56,11 @@ pub fn update_tool_draw(mut state: ResMut<State>, mut container: ResMut<CanvasCo
     if let ToolType::Brush = state.selected_tool {
         let pos = super::mouse_world_pos(state.camera_state.instance);
 
-        if let Err(e) = container.canvas.set_pixel(
-            pos.x as u32,
-            pos.y as u32,
-            Color::from(state.color),
-        ) {
+        if let Err(e) =
+            container
+                .canvas
+                .set_pixel(pos.x as u32, pos.y as u32, Color::from(state.color))
+        {
             match e {
                 CanvasError::Client(_e) => {
                     panic!("couldn't set pixel");

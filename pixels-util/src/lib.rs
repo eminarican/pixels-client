@@ -1,18 +1,12 @@
+pub mod color;
 pub mod cooldown;
 pub mod pixels;
-pub mod color;
 
 pub mod prelude {
     pub use crate::{
-        color::{
-            Color,
-            ColorMode
-        },
-        pixels::{
-            Pixels,
-            PixelsIterator
-        },
+        color::{Color, ColorMode},
         cooldown::Cooldown,
+        pixels::{Pixels, PixelsIterator},
     };
 }
 

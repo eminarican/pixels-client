@@ -1,21 +1,14 @@
 use bevy_time::Time;
 use clap::Parser;
 
-use rfd::{
-    FileDialog,
-    MessageDialog,
-    MessageButtons
-};
+use rfd::{FileDialog, MessageButtons, MessageDialog};
 
 use bevy_ecs::prelude::*;
 use macroquad::prelude::*;
 use pixels_canvas::prelude::*;
 
 use canvas::CanvasContainer;
-use state::{
-    State,
-    ToolType
-};
+use state::{State, ToolType};
 
 mod canvas;
 mod input;
@@ -40,10 +33,7 @@ fn main() {
 }
 
 async fn entry(image: Option<Element>) {
-    let mut app = App::new(
-        Args::parse(),
-        State::new(image)
-    );
+    let mut app = App::new(Args::parse(), State::new(image));
 
     loop {
         app.update();
@@ -58,26 +48,15 @@ impl App {
         let canvas = Canvas::new(args.refresh).expect("couldn't create canvas");
         let mut world = World::new();
 
-        request_new_screen_size(
-            (canvas.width() * 2) as f32,
-            (canvas.height() * 2) as f32
-        );
+        request_new_screen_size((canvas.width() * 2) as f32, (canvas.height() * 2) as f32);
         state.camera_state.position = calculate_center(&canvas);
 
         let mut draw_schedule = Schedule::default();
         let mut update_schedule = Schedule::default();
 
-        update_schedule.add_systems((
-            update_time,
-            update_camera
-        ));
+        update_schedule.add_systems((update_time, update_camera));
 
-        canvas::register_systems(
-            canvas,
-            &mut world,
-            &mut update_schedule,
-            &mut draw_schedule,
-        );
+        canvas::register_systems(canvas, &mut world, &mut update_schedule, &mut draw_schedule);
         input::register_systems(&mut update_schedule);
 
         world.insert_resource(Time::default());
@@ -135,7 +114,7 @@ fn get_element() -> Option<Element> {
         .set_description("would you like to select an image to paste?")
         .show();
     if !select {
-        return None
+        return None;
     }
 
     let path = FileDialog::new()
